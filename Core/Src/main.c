@@ -50,6 +50,14 @@ CAN_RxHeaderTypeDef RxHeader;
 uint8_t				TxData[8];
 uint8_t				RxData[8];
 uint32_t			TxMailbox;
+
+uint32_t time_RPM;
+uint32_t time_IGN;
+uint32_t time_IGN_KEY;
+uint32_t time_MPH;
+
+uint32_t current_time;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,18 +106,29 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-  TxHeader.DLC = 8;
-  TxHeader.StdId = 0x501;
-  TxData[0] = 0x01;
-  TxData[1] = 0x00;
-  TxData[2] = 0x00;
-  TxData[3] = 0x00;
-  TxData[4] = 0x00;
-  TxData[5] = 0x00;
-  TxData[6] = 0x00;
-  TxData[7] = 0x00;
+//  TxHeader.DLC = 8;
+//  TxHeader.StdId = 0x501;
+//  TxData[0] = 0x01;
+//  TxData[1] = 0x00;
+//  TxData[2] = 0x00;
+//  TxData[3] = 0x00;
+//  TxData[4] = 0x00;
+//  TxData[5] = 0x00;
+//  TxData[6] = 0x00;
+//  TxData[7] = 0x00;
+//
+//  TxMailbox = 0;
 
-  TxMailbox = 0;
+
+//  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+//  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//  {
+//	  Error_Handler();
+//  }
+  time_RPM = HAL_GetTick();
+  time_IGN = HAL_GetTick();
+  time_IGN_KEY = HAL_GetTick();
+  time_MPH = HAL_GetTick();
 
   /* USER CODE END 2 */
  
@@ -119,12 +138,36 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//	  if (HAL_GetTick() >= (time_IGN + 200))
+//	  	  {
+//		  	  Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+//	  	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//	  	  	  	  {
+//	  	  		  	  Error_Handler();
+//	  	  	  	  }
+//	  	  	  time_IGN = HAL_GetTick();
+//	  	  }
 
-	if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	HAL_Delay(1000);
+//	  if (HAL_GetTick() >= (time_RPM + 100))
+//	  {
+//		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
+//	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//	  	  	  {
+//	  		  	  Error_Handler();
+//	  	  	  }
+//	  	  time_RPM = HAL_GetTick();
+//	  }
+//
+	  if (HAL_GetTick() >= (time_IGN_KEY + 100))
+	  	  {
+		  	  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+	  	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+	  	  	  	  {
+	  	  		  	  Error_Handler();
+	  	  	  	  }
+	  	  	  time_IGN_KEY = HAL_GetTick();
+	  	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -228,29 +271,29 @@ static void MX_CAN_Init(void)
   	Error_Handler();
   }
   // send test message
-   TxHeader.DLC = 8;
-   TxHeader.StdId = 0x273;
-   TxData[0] = 0x1D;
-   TxData[1] = 0xE1;
-   TxData[2] = 0x00;
-   TxData[3] = 0xF0;
-   TxData[4] = 0xFF;
-   TxData[5] = 0x7F;
-   TxData[6] = 0xDE;
-   TxData[7] = 0x04;
-   TxMailbox = 0;
-
-   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-   {
-   	Error_Handler();
-   }
-
-   HAL_Delay(250);
-
-   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-   {
-	   Error_Handler();
-   }
+//   TxHeader.DLC = 8;
+//   TxHeader.StdId = 0x273;
+//   TxData[0] = 0x1D;
+//   TxData[1] = 0xE1;
+//   TxData[2] = 0x00;
+//   TxData[3] = 0xF0;
+//   TxData[4] = 0xFF;
+//   TxData[5] = 0x7F;
+//   TxData[6] = 0xDE;
+//   TxData[7] = 0x04;
+//   TxMailbox = 0;
+//
+//   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//   {
+//   	Error_Handler();
+//   }
+//
+//   HAL_Delay(250);
+//
+//   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//   {
+//	   Error_Handler();
+//   }
 
   /* USER CODE END CAN_Init 2 */
 
