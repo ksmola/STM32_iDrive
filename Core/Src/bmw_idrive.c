@@ -113,4 +113,77 @@ void Set_MPH(uint16_t mph, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
     TxHeader->StdId = CAN_ID_MPH;
     TxMailbox = 0;
 
+//    TxData[0] = 0xFE;
+//    TxData[1] = 0xFE;
+//
+//    TxData[2] = 0xFF;
+//    TxData[3] = 0x00;
+//
+//    TxData[4] = (rpm << 2) & 0xFF;
+//    TxData[5] = (rpm) >> 6;
+//
+//    TxData[6] = 0xFE;
+//    TxData[7] = 0x99;
+
 }
+
+void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 2;
+	TxHeader->StdId = CAN_ID_MPH;
+	TxMailbox = 0;
+
+	switch (status)
+	{
+	case 0: //Indicators Off (sent once)
+		TxData[0] = 0x80;
+		TxData[1] = 0xF0;
+		break;
+	case 1: // Left turn signal (sent after F2)
+		TxData[0] = 0x91;
+		TxData[1] = 0xF1;
+		break;
+	case 2: // Left turn signal (sent before F1)
+		TxData[0] = 0x91;
+		TxData[1] = 0xF2;
+		break;
+	case 3: // Right turn signal (sent after F2)
+		TxData[0] = 0xA1;
+		TxData[1] = 0xF1;
+		break;
+	case 4: // Right turn signal (sent before F1)
+		TxData[0] = 0xA1;
+		TxData[1] = 0xF2;
+		break;
+	case 5: // Hazzard Lights on (sent after F2)
+		TxData[0] = 0xB1;
+		TxData[1] = 0xF1;
+		break;
+	case 6: // Hazzard Lights on (sent before F1)
+		TxData[0] = 0xB1;
+		TxData[1] = 0xF2;
+		break;
+	default:
+		break;
+	}
+
+}
+
+void Set_Error(uint8_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_ERROR;
+	TxMailbox = 0;
+
+	TxData[0] = 0x40;
+	TxData[1] = 0x22;
+
+	TxData[2] = 0x00;
+	TxData[3] = 0x00;
+
+	TxData[4] = 0xFF;
+	TxData[5] = 0xFF;
+	TxData[6] = 0xFF;
+	TxData[7] = 0xFF;
+}
+

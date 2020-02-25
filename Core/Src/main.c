@@ -148,17 +148,17 @@ int main(void)
 //	  	  	  time_IGN = HAL_GetTick();
 //	  	  }
 
-//	  if (HAL_GetTick() >= (time_RPM + 100))
-//	  {
-//		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
-//	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//	  	  	  {
-//	  		  	  Error_Handler();
-//	  	  	  }
-//	  	  time_RPM = HAL_GetTick();
-//	  }
-//
-	  if (HAL_GetTick() >= (time_IGN_KEY + 100))
+	  if (CAN_UPDATE_RPM)
+	  {
+		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
+	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+	  	  	  {
+	  		  	  Error_Handler();
+	  	  	  }
+	  	  time_RPM = HAL_GetTick();
+	  }
+
+	  if (CAN_UPDATE_IGN_STATUS)
 	  	  {
 		  	  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
 	  	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
