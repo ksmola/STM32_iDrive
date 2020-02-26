@@ -5,11 +5,9 @@
 #define __BMW_IDRIVE_H
 #endif
 
-//#define CAN_10HZ				10
-//#define CAN_100HZ				100
-
-#define CAN_UPDATE_IGN_STATUS	HAL_GetTick() >= (time_IGN_KEY + 100)
-#define CAN_UPDATE_RPM			HAL_GetTick() >= (time_RPM + 100)
+#define UPDATE_100HZ		HAL_GetTick() >= (time_100hz + 10)
+#define UPDATE_10HZ			HAL_GetTick() >= (time_10hz + 100)
+#define UPDATE_5HZ			HAL_GetTick() >= (time_5hz + 200)
 
 #define CAN_ID_RPM      		0x0AA
 #define CAN_ID_MPH      		0x1A6

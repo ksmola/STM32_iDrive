@@ -51,10 +51,9 @@ uint8_t				TxData[8];
 uint8_t				RxData[8];
 uint32_t			TxMailbox;
 
-uint32_t time_RPM;
-uint32_t time_IGN;
-uint32_t time_IGN_KEY;
-uint32_t time_MPH;
+uint32_t time_5hz;
+uint32_t time_10hz;
+uint32_t time_100hz;
 
 uint32_t current_time;
 
@@ -82,7 +81,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -125,53 +123,50 @@ int main(void)
 //  {
 //	  Error_Handler();
 //  }
-  time_RPM = HAL_GetTick();
-  time_IGN = HAL_GetTick();
-  time_IGN_KEY = HAL_GetTick();
-  time_MPH = HAL_GetTick();
 
+  time_100hz = HAL_GetTick();
+  time_10hz = HAL_GetTick();
+  time_5hz = HAL_GetTick();
   /* USER CODE END 2 */
- 
- 
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  if (HAL_GetTick() >= (time_IGN + 200))
-//	  	  {
-//		  	  Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-//	  	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//	  	  	  	  {
-//	  	  		  	  Error_Handler();
-//	  	  	  	  }
-//	  	  	  time_IGN = HAL_GetTick();
-//	  	  }
-
-	  if (CAN_UPDATE_RPM)
+	  if (UPDATE_5HZ) //updates every 200ms
 	  {
-		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
-	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-	  	  	  {
-	  		  	  Error_Handler();
-	  	  	  }
-	  	  time_RPM = HAL_GetTick();
+		  Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  time_5hz = HAL_GetTick();
+	  }
+	  if (UPDATE_10HZ) //updates every 100ms
+	  {
+		  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  time_10hz = HAL_GetTick();
 	  }
 
-	  if (CAN_UPDATE_IGN_STATUS)
-	  	  {
-		  	  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
-	  	  	  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-	  	  	  	  {
-	  	  		  	  Error_Handler();
-	  	  	  	  }
-	  	  	  time_IGN_KEY = HAL_GetTick();
-	  	  }
+	  if (UPDATE_100HZ) //updates every 10ms
+	  {
+		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  time_100hz = HAL_GetTick();
+	  }
+  }
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
   /* USER CODE END 3 */
 }
 
