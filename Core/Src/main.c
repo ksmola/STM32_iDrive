@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,11 +51,16 @@ uint8_t				TxData[8];
 uint8_t				RxData[8];
 uint32_t			TxMailbox;
 
+uint32_t time_2hz;
 uint32_t time_5hz;
 uint32_t time_10hz;
 uint32_t time_100hz;
 
 uint32_t current_time;
+uint32_t light_timer;
+
+bool turnsignal_left;
+bool light_on;
 
 /* USER CODE END PV */
 
@@ -63,6 +68,7 @@ uint32_t current_time;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN_Init(void);
+void Turnsignal_Left();
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -85,13 +91,12 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* USER CODE BEGIN Init */
 
   //initialize iDrive controller
 
-  /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
@@ -119,14 +124,20 @@ int main(void)
 
 
 //  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+//  Set_Light_Switch(1, &hcan, &TxHeader, &TxData, &TxMailbox);
 //  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 //  {
 //	  Error_Handler();
 //  }
+//  light_timer = HAL_GetTick();
 
   time_100hz = HAL_GetTick();
   time_10hz = HAL_GetTick();
   time_5hz = HAL_GetTick();
+  time_2hz = HAL_GetTick();
+
+  turnsignal_left = false;
+  light_on = false;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -150,18 +161,38 @@ int main(void)
 		  {
 			  Error_Handler();
 		  }
+
+		  Set_Fuel(100, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+
+		  Set_Lights(90, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+
 		  time_10hz = HAL_GetTick();
 	  }
 
 	  if (UPDATE_100HZ) //updates every 10ms
 	  {
-		  Set_RPM(2000, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  Set_RPM(845, &hcan, &TxHeader, &TxData, &TxMailbox);
 		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 		  {
 			  Error_Handler();
 		  }
 		  time_100hz = HAL_GetTick();
 	  }
+
+	  if (UPDATE_2HZ) // updates every second
+	  {
+//		  Turnsignal_Left();
+		  time_2hz = HAL_GetTick();
+	  }
+
   }
 
     /* USER CODE END WHILE */
@@ -359,6 +390,24 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	{
 //		Parse_CAN_data();
 		//got valid can data
+	}
+}
+
+void Turnsignal_Left()
+{
+	if(!turnsignal_left)
+	{
+		Set_Signals(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		{
+			Error_Handler();
+		}
+		Set_Signals(1, &hcan, &TxHeader, &TxData, &TxMailbox);
+		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		{
+			Error_Handler();
+		}
+//		turnsignal_left = true;
 	}
 }
 /* USER CODE END 4 */
