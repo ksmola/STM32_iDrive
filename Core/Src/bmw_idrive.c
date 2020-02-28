@@ -89,7 +89,6 @@ void Send_IGN_KEY_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTy
 void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 //	uint32_t time = HAL_GetTick();
-
     TxHeader->DLC = 8;
     TxHeader->StdId = CAN_ID_RPM;
     TxMailbox = 0;
@@ -113,24 +112,24 @@ void Set_MPH(uint16_t mph, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
     TxHeader->StdId = CAN_ID_MPH;
     TxMailbox = 0;
 
-//    TxData[0] = 0xFE;
-//    TxData[1] = 0xFE;
-//
-//    TxData[2] = 0xFF;
-//    TxData[3] = 0x00;
-//
-//    TxData[4] = (rpm << 2) & 0xFF;
-//    TxData[5] = (rpm) >> 6;
-//
-//    TxData[6] = 0xFE;
-//    TxData[7] = 0x99;
+    TxData[0] = 0x13;
+    TxData[1] = 0x4D;
+
+    TxData[2] = 0x46;
+    TxData[3] = 0x4D;
+
+    TxData[4] = 0x33;
+    TxData[5] = 0x4D;
+
+    TxData[6] = 0xD0;
+    TxData[7] = 0xFF;
 
 }
 
 void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 2;
-	TxHeader->StdId = CAN_ID_MPH;
+	TxHeader->StdId = CAN_ID_SIGNALS;
 	TxMailbox = 0;
 
 	switch (status)
@@ -187,3 +186,65 @@ void Set_Error(uint8_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxH
 	TxData[7] = 0xFF;
 }
 
+void Set_Fuel(uint8_t percent, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	int val;
+	val = percent * 99.97;
+	if (val > 9997)
+		val = 9997;
+
+	TxHeader->DLC = 5;
+	TxHeader->StdId = CAN_ID_FUEL;
+	TxMailbox = 0;
+
+	TxData[0] = val & 0xFF;;
+	TxData[1] = val >> 8;
+	TxData[2] = val & 0xFF;
+	TxData[3] = val >> 8;
+
+
+	TxData[4] = 0x00;
+}
+
+void Set_Temp(uint8_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_TEMP;
+	TxMailbox = 0;
+
+	TxData[0] = 0x85;
+	TxData[1] = 0xFF;
+
+	TxData[2] = 0x46;
+	TxData[3] = 0xC0;
+
+	TxData[4] = 0x5D;
+	TxData[5] = 0x37;
+	TxData[6] = 0xCD;
+	TxData[7] = 0xA8;
+}
+
+void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 3;
+	TxHeader->StdId = CAN_ID_LIGHTS;
+	TxMailbox = 0;
+
+	TxData[0] = 0x00;
+	TxData[1] = 0x10;
+	TxData[2] = 0xF7;
+}
+
+void Set_Light_Switch(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 2;
+	TxHeader->StdId = 0x1E3;
+	TxMailbox = 0;
+
+	if (val)
+		TxData[0] = 0xF1;
+	else
+		TxData[0] = 0xF0;
+
+	TxData[1] = 0xFF;
+}
