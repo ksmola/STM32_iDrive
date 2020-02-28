@@ -1,0 +1,22 @@
+GPIO:
+Turn signal left
+Turn signal right
+Hazards
+High beams
+Interior lights
+eBrake
+Brakefluid
+Coolant level
+Fog lights
+ABS
+
+ADC:
+Dimmer
+Odometer
+Fuelgauge
+
+CAN:
+RPM
+Oiltemp
+Watertemp
+Check Engine
