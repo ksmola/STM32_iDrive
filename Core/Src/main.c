@@ -51,16 +51,20 @@ uint8_t				TxData[8];
 uint8_t				RxData[8];
 uint32_t			TxMailbox;
 
+uint32_t time_1p5hz;
 uint32_t time_2hz;
 uint32_t time_5hz;
 uint32_t time_10hz;
 uint32_t time_100hz;
 
+uint32_t rpmcount;
 uint32_t current_time;
 uint32_t light_timer;
 
 bool turnsignal_left;
-bool light_on;
+bool lights_on;
+
+uint32_t rpmcount;
 
 /* USER CODE END PV */
 
@@ -68,7 +72,6 @@ bool light_on;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_CAN_Init(void);
-void Turnsignal_Left();
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -91,12 +94,11 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
-  //initialize iDrive controller
-
+  /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
@@ -135,9 +137,11 @@ int main(void)
   time_10hz = HAL_GetTick();
   time_5hz = HAL_GetTick();
   time_2hz = HAL_GetTick();
+  time_1p5hz = HAL_GetTick();
 
   turnsignal_left = false;
-  light_on = false;
+  lights_on = false;
+  rpmcount = 500;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -167,31 +171,60 @@ int main(void)
 		  {
 			  Error_Handler();
 		  }
-
-		  Set_Lights(90, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-
 		  time_10hz = HAL_GetTick();
 	  }
 
-	  if (UPDATE_100HZ) //updates every 10ms
+	  if (UPDATE_10HZ) //updates every 10ms
 	  {
-		  Set_RPM(845, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  Set_RPM(750, &hcan, &TxHeader, &TxData, &TxMailbox);
 		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 		  {
 			  Error_Handler();
 		  }
+		  rpmcount++;
+		  if (rpmcount > 7000)
+			  rpmcount = 0;
 		  time_100hz = HAL_GetTick();
 	  }
 
-	  if (UPDATE_2HZ) // updates every second
-	  {
+//	  if (UPDATE_2HZ) // updates every second
+//	  {
 //		  Turnsignal_Left();
-		  time_2hz = HAL_GetTick();
+//		  time_2hz = HAL_GetTick();
+//	  }
+
+	  if(HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin)==1)
+	  {
+		  if (!lights_on)
+		  {
+			  Set_Lights(1, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+			  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+			  {
+				  Error_Handler();
+			  }
+			  lights_on = true;
+		  }
+
 	  }
+	  if(HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin)==1)
+	  {
+		  if (UPDATE_1P5HZ) // updates every second
+		  {
+			  Turnsignal_Left();
+			  time_1p5hz = HAL_GetTick();
+		  }
+	  }
+
+	  if(HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin)==1)
+	  {
+		  if (UPDATE_1P5HZ) // updates every second
+		  {
+			  Turnsignal_Right();
+			  time_1p5hz = HAL_GetTick();
+		  }
+
+	  }
+
 
   }
 
@@ -350,6 +383,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : LIGHT_Pin TURN_LEFT_Pin TURN_RIGHT_Pin */
+  GPIO_InitStruct.Pin = LIGHT_Pin|TURN_LEFT_Pin|TURN_RIGHT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -395,8 +434,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 void Turnsignal_Left()
 {
-	if(!turnsignal_left)
-	{
 		Set_Signals(2, &hcan, &TxHeader, &TxData, &TxMailbox);
 		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 		{
@@ -407,8 +444,20 @@ void Turnsignal_Left()
 		{
 			Error_Handler();
 		}
-//		turnsignal_left = true;
-	}
+}
+
+void Turnsignal_Right()
+{
+		Set_Signals(4, &hcan, &TxHeader, &TxData, &TxMailbox);
+		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		{
+			Error_Handler();
+		}
+		Set_Signals(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		{
+			Error_Handler();
+		}
 }
 /* USER CODE END 4 */
 

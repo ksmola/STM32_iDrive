@@ -88,7 +88,6 @@ void Send_IGN_KEY_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTy
 
 void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
-//	uint32_t time = HAL_GetTick();
     TxHeader->DLC = 8;
     TxHeader->StdId = CAN_ID_RPM;
     TxMailbox = 0;
@@ -230,9 +229,10 @@ void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHea
 	TxHeader->StdId = CAN_ID_LIGHTS;
 	TxMailbox = 0;
 
-	TxData[0] = 0x00;
-	TxData[1] = 0x10;
+	TxData[0] = 0x85;
+	TxData[1] = 0x12;
 	TxData[2] = 0xF7;
+
 }
 
 void Set_Light_Switch(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)

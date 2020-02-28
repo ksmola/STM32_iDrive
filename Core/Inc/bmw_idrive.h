@@ -9,6 +9,7 @@
 #define UPDATE_10HZ			HAL_GetTick() >= (time_10hz + 100)
 #define UPDATE_5HZ			HAL_GetTick() >= (time_5hz + 200)
 #define UPDATE_2HZ			HAL_GetTick() >= (time_2hz + 500)
+#define UPDATE_1P5HZ		HAL_GetTick() >= (time_1p5hz + 750)
 
 #define CAN_ID_RPM      		0x0AA
 #define CAN_ID_MPH      		0x1A6
