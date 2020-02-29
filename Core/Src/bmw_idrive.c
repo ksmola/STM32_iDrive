@@ -92,8 +92,8 @@ void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
     TxHeader->StdId = CAN_ID_RPM;
     TxMailbox = 0;
 
-    TxData[0] = 0xFE;
-    TxData[1] = 0xFE;
+    TxData[0] = 0x5F;
+    TxData[1] = 0x59;
 
     TxData[2] = 0xFF; //TPS
     TxData[3] = 0x00; //TPS
@@ -101,27 +101,28 @@ void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
     TxData[4] = (rpm << 2) & 0xFF;
     TxData[5] = (rpm) >> 6;
     
-    TxData[6] = 0xFE; //not needed?
+    TxData[6] = 0x80; //not needed?
     TxData[7] = 0x99; //not needed?
 }
 
-void Set_MPH(uint16_t mph, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_MPH(uint16_t *mph, uint16_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
     TxHeader->DLC = 8;
     TxHeader->StdId = CAN_ID_MPH;
     TxMailbox = 0;
 
-    TxData[0] = 0x13;
-    TxData[1] = 0x4D;
 
-    TxData[2] = 0x46;
-    TxData[3] = 0x4D;
+    TxData[0] = *mph & 0xFF;
+    TxData[1] = *mph >> 8;
 
-    TxData[4] = 0x33;
-    TxData[5] = 0x4D;
+    TxData[2] = *mph & 0xFF;
+    TxData[3] = *mph >> 8;
 
-    TxData[6] = 0xD0;
-    TxData[7] = 0xFF;
+    TxData[4] = *mph & 0xFF;
+    TxData[5] = *mph >> 8;
+
+    TxData[6] = *counter & 0xFF;
+    TxData[7] = (*counter >> 8) | 0xF0;
 
 }
 
@@ -174,10 +175,10 @@ void Set_Error(uint8_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxH
 	TxMailbox = 0;
 
 	TxData[0] = 0x40;
-	TxData[1] = 0x22;
+	TxData[1] = signal;
 
 	TxData[2] = 0x00;
-	TxData[3] = 0x00;
+	TxData[3] = 0x30;
 
 	TxData[4] = 0xFF;
 	TxData[5] = 0xFF;
@@ -205,22 +206,30 @@ void Set_Fuel(uint8_t percent, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxH
 	TxData[4] = 0x00;
 }
 
-void Set_Temp(uint8_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_Temp(uint16_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
+
+	float temp_f;
+	if (temp < 160)
+		temp = 160;
+	if (temp > 340)
+		temp = 340;
+	temp_f = (temp - 32) * 0.5556;
+	temp = (int)temp_f + 49;
+
 	TxHeader->DLC = 8;
 	TxHeader->StdId = CAN_ID_TEMP;
 	TxMailbox = 0;
 
-	TxData[0] = 0x85;
-	TxData[1] = 0xFF;
-
+	TxData[0] = 0xFF; // coolant temp
+	TxData[1] = temp; // oil temp
 	TxData[2] = 0x46;
 	TxData[3] = 0xC0;
 
-	TxData[4] = 0x5D;
-	TxData[5] = 0x37;
-	TxData[6] = 0xCD;
-	TxData[7] = 0xA8;
+	TxData[4] = 0x4F;
+	TxData[5] = 0xC4;
+	TxData[6] = 0x0D;
+	TxData[7] = 0x90;
 }
 
 void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -247,4 +256,58 @@ void Set_Light_Switch(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef 
 		TxData[0] = 0xF0;
 
 	TxData[1] = 0xFF;
+}
+
+void Set_Seatbelt_Light(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox) //not working?
+{
+	TxHeader->DLC = 8;
+
+	if (val)
+		TxHeader->StdId = CAN_ID_SEATBELT_ON;
+	else
+		TxHeader->StdId = CAN_ID_SEATBELT_OFF;
+
+	TxMailbox = 0;
+
+	TxData[0] = 0x40;
+	TxData[1] = 0x4D;
+	TxData[2] = 0x00;
+
+	if (val)
+		TxData[3] = 0x29;
+	else
+		TxData[3] = 0x28;
+
+	TxData[4] = 0xFF;
+	TxData[5] = 0xFF;
+	TxData[6] = 0xFF;
+	TxData[7] = 0xFF;
+}
+
+void Set_ABS(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_ABS;
+	TxMailbox = 0;
+
+	TxData[0] = 0x00;
+	TxData[1] = 0xE0;
+	TxData[2] = 0xB3;
+	TxData[3] = 0xFC;
+	TxData[4] = 0xF0;
+	TxData[5] = 0x00;
+	TxData[6] = 0x00;
+	TxData[7] = 0x65;
+}
+
+void Set_ABS_2(uint8_t *abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+
+	TxHeader->DLC = 2;
+	TxHeader->StdId = CAN_ID_ABS_2;
+	TxMailbox = 0;
+
+	TxData[0] = 0xF0 + *abs_counter;
+	TxData[1] = 0xFF;
+
 }

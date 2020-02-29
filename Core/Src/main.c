@@ -60,6 +60,11 @@ uint32_t time_100hz;
 uint32_t rpmcount;
 uint32_t current_time;
 uint32_t light_timer;
+uint32_t abs_timer;
+uint8_t abs_counter;
+uint16_t mph_counter;
+uint32_t mph_timer;
+uint16_t mph_last;
 
 bool turnsignal_left;
 bool lights_on;
@@ -138,10 +143,15 @@ int main(void)
   time_5hz = HAL_GetTick();
   time_2hz = HAL_GetTick();
   time_1p5hz = HAL_GetTick();
+  abs_timer = HAL_GetTick();
 
   turnsignal_left = false;
   lights_on = false;
   rpmcount = 500;
+  abs_counter = 0;
+  mph_counter = 0;
+  mph_last = 0;
+  mph_timer = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -155,6 +165,8 @@ int main(void)
 		  {
 			  Error_Handler();
 		  }
+
+
 		  time_5hz = HAL_GetTick();
 	  }
 
@@ -166,32 +178,94 @@ int main(void)
 			  Error_Handler();
 		  }
 
-		  Set_Fuel(100, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  Set_Fuel(40, &hcan, &TxHeader, &TxData, &TxMailbox);
 		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 		  {
 			  Error_Handler();
 		  }
+		  Set_Temp(250, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  Send_Speed_Msg();
+//		  Set_Seatbelt_Light(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//		  {
+//			  Error_Handler();
+//		  }
+//		  Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//		  {
+//			  Error_Handler();
+//		  }
+//
+//		  if (HAL_GetTick() >= (abs_timer + 200))
+//		  {
+//			  abs_counter ++;
+//			  abs_timer = HAL_GetTick();
+//		  }
+//		  if (abs_counter > 15)
+//			  abs_counter = 0;
+//		  Set_ABS_2(&abs_counter,  &hcan, &TxHeader, &TxData, &TxMailbox);
+//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//		  {
+//			  Error_Handler();
+//		  }
+
 		  time_10hz = HAL_GetTick();
 	  }
 
-	  if (UPDATE_10HZ) //updates every 10ms
+//	  if (UPDATE_100HZ) //updates every 10ms
+//	  {
+//		  Set_RPM(rpmcount, &hcan, &TxHeader, &TxData, &TxMailbox);
+//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//		  {
+//			  Error_Handler();
+//		  }
+//		  rpmcount++;
+//		  if (rpmcount > 7000)
+//			  rpmcount = 0;
+//		  time_100hz = HAL_GetTick();
+//	  }
+
+	  if (UPDATE_2HZ)
 	  {
-		  Set_RPM(750, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  Set_Error(207, &hcan, &TxHeader, &TxData, &TxMailbox);
 		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
 		  {
 			  Error_Handler();
 		  }
-		  rpmcount++;
-		  if (rpmcount > 7000)
-			  rpmcount = 0;
-		  time_100hz = HAL_GetTick();
-	  }
 
-//	  if (UPDATE_2HZ) // updates every second
-//	  {
-//		  Turnsignal_Left();
-//		  time_2hz = HAL_GetTick();
-//	  }
+		  Set_Error(281, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+
+		  Set_Error(60, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  Set_Error(167, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  Set_Error(97, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+		  Set_Error(300, &hcan, &TxHeader, &TxData, &TxMailbox);
+		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+		  {
+			  Error_Handler();
+		  }
+
+		  time_2hz = HAL_GetTick();
+	  }
 
 	  if(HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin)==1)
 	  {
@@ -208,7 +282,7 @@ int main(void)
 	  }
 	  if(HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin)==1)
 	  {
-		  if (UPDATE_1P5HZ) // updates every second
+		  if (UPDATE_1P5HZ)
 		  {
 			  Turnsignal_Left();
 			  time_1p5hz = HAL_GetTick();
@@ -217,7 +291,7 @@ int main(void)
 
 	  if(HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin)==1)
 	  {
-		  if (UPDATE_1P5HZ) // updates every second
+		  if (UPDATE_1P5HZ)
 		  {
 			  Turnsignal_Right();
 			  time_1p5hz = HAL_GetTick();
@@ -459,6 +533,25 @@ void Turnsignal_Right()
 			Error_Handler();
 		}
 }
+
+void Send_Speed_Msg()
+{
+	uint16_t mph, mph_a, mph_2a;
+	mph = 20;
+
+	mph_a = (((HAL_GetTick()-mph_timer)/50)*mph/2);
+	mph_2a = mph_a + mph_last;
+	mph_last = mph_2a;
+	mph_timer = HAL_GetTick();
+
+	Set_MPH(&mph_2a, &mph_counter,&hcan, &TxHeader, &TxData, &TxMailbox);
+	if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	mph_counter += 200;
+}
 /* USER CODE END 4 */
 
 /**
@@ -469,6 +562,7 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+	printf("ERROR!");
 
   /* USER CODE END Error_Handler_Debug */
 }
