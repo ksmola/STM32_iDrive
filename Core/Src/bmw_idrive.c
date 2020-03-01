@@ -1,7 +1,6 @@
 #include "bmw_idrive.h"
 #include "stdbool.h"
 
-
 void Send_IGN_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 8;
@@ -29,13 +28,12 @@ void Send_IGN_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDe
 		break;
 	}
 
-    TxData[3] = 0x50;
-    TxData[4] = 0xFF;
-    TxData[5] = 0xFF;
-    TxData[6] = 0xFF;
-    TxData[7] = 0xFF;
+	TxData[3] = 0x50;
+	TxData[4] = 0xFF;
+	TxData[5] = 0xFF;
+	TxData[6] = 0xFF;
+	TxData[7] = 0xFF;
 }
-
 
 void Send_IGN_KEY_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
@@ -72,58 +70,55 @@ void Send_IGN_KEY_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTy
 	case 3:
 	case 4:
 		TxData[1] = 0x42;
-//		TxData[1] = 0x40;
-	break;
+		//		TxData[1] = 0x40;
+		break;
 	default:
 		break;
 	}
 
-    TxData[2] = 0x69;
-//    TxData[2] = 0x21;
-    TxData[3] = 0x8F;
-    TxData[4] = 0xE2; //counter
-//    TxData[4] = 0x50; //counter
+	TxData[2] = 0x69;
+	//    TxData[2] = 0x21;
+	TxData[3] = 0x8F;
+	TxData[4] = 0xE2; //counter
+	//    TxData[4] = 0x50; //counter
 }
-
 
 void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
-    TxHeader->DLC = 8;
-    TxHeader->StdId = CAN_ID_RPM;
-    TxMailbox = 0;
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_RPM;
+	TxMailbox = 0;
 
-    TxData[0] = 0x5F;
-    TxData[1] = 0x59;
+	TxData[0] = 0x5F;
+	TxData[1] = 0x59;
 
-    TxData[2] = 0xFF; //TPS
-    TxData[3] = 0x00; //TPS
+	TxData[2] = 0xFF; //TPS
+	TxData[3] = 0x00; //TPS
 
-    TxData[4] = (rpm << 2) & 0xFF;
-    TxData[5] = (rpm) >> 6;
-    
-    TxData[6] = 0x80; //not needed?
-    TxData[7] = 0x99; //not needed?
+	TxData[4] = (rpm << 2) & 0xFF;
+	TxData[5] = (rpm) >> 6;
+
+	TxData[6] = 0x80; //not needed?
+	TxData[7] = 0x99; //not needed?
 }
 
 void Set_MPH(uint16_t *mph, uint16_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
-    TxHeader->DLC = 8;
-    TxHeader->StdId = CAN_ID_MPH;
-    TxMailbox = 0;
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_MPH;
+	TxMailbox = 0;
 
+	TxData[0] = *mph & 0xFF;
+	TxData[1] = *mph >> 8;
 
-    TxData[0] = *mph & 0xFF;
-    TxData[1] = *mph >> 8;
+	TxData[2] = *mph & 0xFF;
+	TxData[3] = *mph >> 8;
 
-    TxData[2] = *mph & 0xFF;
-    TxData[3] = *mph >> 8;
+	TxData[4] = *mph & 0xFF;
+	TxData[5] = *mph >> 8;
 
-    TxData[4] = *mph & 0xFF;
-    TxData[5] = *mph >> 8;
-
-    TxData[6] = *counter & 0xFF;
-    TxData[7] = (*counter >> 8) | 0xF0;
-
+	TxData[6] = *counter & 0xFF;
+	TxData[7] = (*counter >> 8) | 0xF0;
 }
 
 void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -165,10 +160,9 @@ void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *T
 	default:
 		break;
 	}
-
 }
 
-void Set_Error(uint8_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_Error(uint16_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 8;
 	TxHeader->StdId = CAN_ID_ERROR;
@@ -177,6 +171,7 @@ void Set_Error(uint8_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxH
 	TxData[0] = 0x40;
 	TxData[1] = signal;
 
+	// TxData[2] = (signal >> 8) | 0xF0;
 	TxData[2] = 0x00;
 	TxData[3] = 0x30;
 
@@ -197,11 +192,10 @@ void Set_Fuel(uint8_t percent, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxH
 	TxHeader->StdId = CAN_ID_FUEL;
 	TxMailbox = 0;
 
-	TxData[0] = val & 0xFF;;
+	TxData[0] = val & 0xFF;
 	TxData[1] = val >> 8;
 	TxData[2] = val & 0xFF;
 	TxData[3] = val >> 8;
-
 
 	TxData[4] = 0x00;
 }
@@ -223,13 +217,13 @@ void Set_Temp(uint16_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHea
 
 	TxData[0] = 0xFF; // coolant temp
 	TxData[1] = temp; // oil temp
-	TxData[2] = 0x46;
-	TxData[3] = 0xC0;
+	TxData[2] = 0x63;
+	TxData[3] = 0xCD;
 
-	TxData[4] = 0x4F;
-	TxData[5] = 0xC4;
-	TxData[6] = 0x0D;
-	TxData[7] = 0x90;
+	TxData[4] = 0x5D;
+	TxData[5] = 0x37;
+	TxData[6] = 0xCD;
+	TxData[7] = 0xA8;
 }
 
 void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -241,7 +235,6 @@ void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHea
 	TxData[0] = 0x85;
 	TxData[1] = 0x12;
 	TxData[2] = 0xF7;
-
 }
 
 void Set_Light_Switch(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -309,5 +302,62 @@ void Set_ABS_2(uint8_t *abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDe
 
 	TxData[0] = 0xF0 + *abs_counter;
 	TxData[1] = 0xFF;
+}
 
+void Set_Counter(uint8_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 2;
+	TxHeader->StdId = CAN_ID_COUNTER;
+	TxMailbox = 0;
+
+	TxData[0] = *counter;
+	TxData[1] = 0xFF;
+}
+
+void Set_DSC(uint8_t *speed, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	uint8_t c_speed;
+	c_speed = *speed * 730;
+
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_DSC;
+	TxMailbox = 0;
+
+	TxData[0] = c_speed & 0xFF;
+	TxData[1] = c_speed >> 8;
+	TxData[2] = c_speed & 0xFF;
+	TxData[3] = c_speed >> 8;
+	TxData[4] = c_speed & 0xFF;
+	TxData[5] = c_speed >> 8;
+	TxData[6] = c_speed & 0xFF;
+	TxData[7] = c_speed >> 8;
+}
+void Set_Steeringwheel_pos(uint16_t *pos, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 6;
+	TxHeader->StdId = CAN_ID_STEERINGPOS;
+	TxMailbox = 0;
+
+	TxData[0] = *pos & 0xFF;
+	TxData[1] = *pos >> 8;
+	TxData[2] = 0xFC;
+	TxData[3] = 0x00;
+	TxData[4] = 0x00;
+	TxData[5] = 0xFF;
+}
+
+void Set_Time(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 8;
+	TxHeader->StdId = CAN_ID_SET_TIME;
+	TxMailbox = 0;
+
+	TxData[0] = 0x09;
+	TxData[1] = 0x2C;
+	TxData[2] = 0x00;
+	TxData[3] = 0x09;
+	TxData[4] = 0x4F;
+	TxData[5] = 0xDF;
+	TxData[6] = 0x07;
+	TxData[6] = 0xF2;
 }

@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stdbool.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,12 +45,22 @@
 CAN_HandleTypeDef hcan;
 
 /* USER CODE BEGIN PV */
-CAN_FilterTypeDef	sFilterConfig;
-CAN_TxHeaderTypeDef	TxHeader;
+CAN_FilterTypeDef sFilterConfig;
+CAN_TxHeaderTypeDef TxHeader;
 CAN_RxHeaderTypeDef RxHeader;
-uint8_t				TxData[8];
-uint8_t				RxData[8];
-uint32_t			TxMailbox;
+uint8_t TxData[8];
+uint8_t RxData[8];
+uint32_t TxMailbox;
+
+typedef struct
+{
+  uint16_t rpm;
+  uint8_t mph;
+  uint16_t oiltemp;
+  uint16_t watertemp;
+} car_data_t;
+
+car_data_t car;
 
 uint32_t time_1p5hz;
 uint32_t time_2hz;
@@ -61,7 +72,9 @@ uint32_t rpmcount;
 uint32_t current_time;
 uint32_t light_timer;
 uint32_t abs_timer;
+uint32_t counter_timer;
 uint8_t abs_counter;
+uint8_t counter;
 uint16_t mph_counter;
 uint32_t mph_timer;
 uint16_t mph_last;
@@ -116,195 +129,126 @@ int main(void)
   MX_GPIO_Init();
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-//  TxHeader.DLC = 8;
-//  TxHeader.StdId = 0x501;
-//  TxData[0] = 0x01;
-//  TxData[1] = 0x00;
-//  TxData[2] = 0x00;
-//  TxData[3] = 0x00;
-//  TxData[4] = 0x00;
-//  TxData[5] = 0x00;
-//  TxData[6] = 0x00;
-//  TxData[7] = 0x00;
-//
-//  TxMailbox = 0;
+  //  TxHeader.DLC = 8;
+  //  TxHeader.StdId = 0x501;
+  //  TxData[0] = 0x01;
+  //  TxData[1] = 0x00;
+  //  TxData[2] = 0x00;
+  //  TxData[3] = 0x00;
+  //  TxData[4] = 0x00;
+  //  TxData[5] = 0x00;
+  //  TxData[6] = 0x00;
+  //  TxData[7] = 0x00;
+  //
+  //  TxMailbox = 0;
 
+  //  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+  //  Set_Light_Switch(1, &hcan, &TxHeader, &TxData, &TxMailbox);
+  //  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  //  {
+  //	  Error_Handler();
+  //  }
+  //  light_timer = HAL_GetTick();
 
-//  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox);
-//  Set_Light_Switch(1, &hcan, &TxHeader, &TxData, &TxMailbox);
-//  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//  {
-//	  Error_Handler();
-//  }
-//  light_timer = HAL_GetTick();
-
-  time_100hz = HAL_GetTick();
-  time_10hz = HAL_GetTick();
-  time_5hz = HAL_GetTick();
-  time_2hz = HAL_GetTick();
-  time_1p5hz = HAL_GetTick();
-  abs_timer = HAL_GetTick();
-
-  turnsignal_left = false;
-  lights_on = false;
-  rpmcount = 500;
-  abs_counter = 0;
-  mph_counter = 0;
-  mph_last = 0;
-  mph_timer = 0;
+  Initialize();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (UPDATE_5HZ) //updates every 200ms
-	  {
-		  Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
+    if (UPDATE_5HZ) //updates every 200ms
+    {
+      Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+      if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+      {
+        Error_Handler();
+      }
 
+      time_5hz = HAL_GetTick();
+    }
 
-		  time_5hz = HAL_GetTick();
-	  }
+    if (UPDATE_10HZ) //updates every 100ms
+    {
+      Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
+      if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+      {
+        Error_Handler();
+      }
 
-	  if (UPDATE_10HZ) //updates every 100ms
-	  {
-		  Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
+      Set_Fuel(40, &hcan, &TxHeader, &TxData, &TxMailbox);
+      if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      Set_Temp(250, &hcan, &TxHeader, &TxData, &TxMailbox);
+      if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+      {
+        Error_Handler();
+      }
 
-		  Set_Fuel(40, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-		  Set_Temp(250, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-		  Send_Speed_Msg();
-//		  Set_Seatbelt_Light(0, &hcan, &TxHeader, &TxData, &TxMailbox);
-//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//		  {
-//			  Error_Handler();
-//		  }
-//		  Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
-//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//		  {
-//			  Error_Handler();
-//		  }
-//
-//		  if (HAL_GetTick() >= (abs_timer + 200))
-//		  {
-//			  abs_counter ++;
-//			  abs_timer = HAL_GetTick();
-//		  }
-//		  if (abs_counter > 15)
-//			  abs_counter = 0;
-//		  Set_ABS_2(&abs_counter,  &hcan, &TxHeader, &TxData, &TxMailbox);
-//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//		  {
-//			  Error_Handler();
-//		  }
+      Send_Speed_Msg();
 
-		  time_10hz = HAL_GetTick();
-	  }
+      Periodic_Maintenance();
 
-//	  if (UPDATE_100HZ) //updates every 10ms
-//	  {
-//		  Set_RPM(rpmcount, &hcan, &TxHeader, &TxData, &TxMailbox);
-//		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//		  {
-//			  Error_Handler();
-//		  }
-//		  rpmcount++;
-//		  if (rpmcount > 7000)
-//			  rpmcount = 0;
-//		  time_100hz = HAL_GetTick();
-//	  }
+      time_10hz = HAL_GetTick();
+    }
 
-	  if (UPDATE_2HZ)
-	  {
-		  Set_Error(207, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
+    if (UPDATE_100HZ) //updates every 10ms
+    {
+      // Set_RPM(car.rpm, &hcan, &TxHeader, &TxData, &TxMailbox);
+      // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+      // {
+      //   Error_Handler();
+      // }
+      // rpmcount++;
+      // if (rpmcount > 7000)
+      //   rpmcount = 0;
+      // time_100hz = HAL_GetTick();
+    }
 
-		  Set_Error(281, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
+    if (UPDATE_2HZ)
+    {
+      Delete_Error_MSG();
 
-		  Set_Error(60, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-		  Set_Error(167, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-		  Set_Error(97, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
-		  Set_Error(300, &hcan, &TxHeader, &TxData, &TxMailbox);
-		  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		  {
-			  Error_Handler();
-		  }
+      time_2hz = HAL_GetTick();
 
-		  time_2hz = HAL_GetTick();
-	  }
+    }
 
-	  if(HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin)==1)
-	  {
-		  if (!lights_on)
-		  {
-			  Set_Lights(1, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-			  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-			  {
-				  Error_Handler();
-			  }
-			  lights_on = true;
-		  }
+    if (HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin) == 1)
+    {
+      if (!lights_on)
+      {
+        Set_Lights(1, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+        {
+          Error_Handler();
+        }
+        lights_on = true;
+      }
+    }
+    if (HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin) == 1)
+    {
+      if (UPDATE_1P5HZ)
+      {
+        Turnsignal_Left();
+        time_1p5hz = HAL_GetTick();
+      }
+    }
 
-	  }
-	  if(HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin)==1)
-	  {
-		  if (UPDATE_1P5HZ)
-		  {
-			  Turnsignal_Left();
-			  time_1p5hz = HAL_GetTick();
-		  }
-	  }
-
-	  if(HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin)==1)
-	  {
-		  if (UPDATE_1P5HZ)
-		  {
-			  Turnsignal_Right();
-			  time_1p5hz = HAL_GetTick();
-		  }
-
-	  }
-
-
+    if (HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin) == 1)
+    {
+      if (UPDATE_1P5HZ)
+      {
+        Turnsignal_Right();
+        time_1p5hz = HAL_GetTick();
+      }
+    }
   }
 
-    /* USER CODE END WHILE */
+  /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
   /* USER CODE END 3 */
 }
@@ -333,8 +277,7 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -397,40 +340,39 @@ static void MX_CAN_Init(void)
   // now start the can peripheral
   if (HAL_CAN_Start(&hcan) != HAL_OK)
   {
-  	Error_Handler();
+    Error_Handler();
   }
   // activate CAN RX IRQ
   if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
   {
-  	Error_Handler();
+    Error_Handler();
   }
   // send test message
-//   TxHeader.DLC = 8;
-//   TxHeader.StdId = 0x273;
-//   TxData[0] = 0x1D;
-//   TxData[1] = 0xE1;
-//   TxData[2] = 0x00;
-//   TxData[3] = 0xF0;
-//   TxData[4] = 0xFF;
-//   TxData[5] = 0x7F;
-//   TxData[6] = 0xDE;
-//   TxData[7] = 0x04;
-//   TxMailbox = 0;
-//
-//   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//   {
-//   	Error_Handler();
-//   }
-//
-//   HAL_Delay(250);
-//
-//   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//   {
-//	   Error_Handler();
-//   }
+  //   TxHeader.DLC = 8;
+  //   TxHeader.StdId = 0x273;
+  //   TxData[0] = 0x1D;
+  //   TxData[1] = 0xE1;
+  //   TxData[2] = 0x00;
+  //   TxData[3] = 0xF0;
+  //   TxData[4] = 0xFF;
+  //   TxData[5] = 0x7F;
+  //   TxData[6] = 0xDE;
+  //   TxData[7] = 0x04;
+  //   TxMailbox = 0;
+  //
+  //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  //   {
+  //   	Error_Handler();
+  //   }
+  //
+  //   HAL_Delay(250);
+  //
+  //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  //   {
+  //	   Error_Handler();
+  //   }
 
   /* USER CODE END CAN_Init 2 */
-
 }
 
 /**
@@ -458,99 +400,207 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LIGHT_Pin TURN_LEFT_Pin TURN_RIGHT_Pin */
-  GPIO_InitStruct.Pin = LIGHT_Pin|TURN_LEFT_Pin|TURN_RIGHT_Pin;
+  GPIO_InitStruct.Pin = LIGHT_Pin | TURN_LEFT_Pin | TURN_RIGHT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
 }
 
 /* USER CODE BEGIN 4 */
 
 void Compose_CAN_msg(uint8_t offset, uint8_t mtype, uint8_t fromid, uint8_t toid, uint8_t table, uint8_t length, uint64_t data)
 {
-//  TxData[0] = AFR_to_ADC_counts(o2_sensor[0].AFR) >> 8;
-//  TxData[1] = AFR_to_ADC_counts(o2_sensor[0].AFR) & 0xFF;
-//  TxData[2] = AFR_to_ADC_counts(o2_sensor[1].AFR) >> 8;
-//  TxData[3] = AFR_to_ADC_counts(o2_sensor[1].AFR) & 0xFF;
-//  TxData[4] = AFR_to_ADC_counts(o2_sensor[2].AFR) >> 8;
-//  TxData[5] = AFR_to_ADC_counts(o2_sensor[2].AFR) & 0xFF;
-//  TxData[6] = AFR_to_ADC_counts(o2_sensor[3].AFR) >> 8;
-//  TxData[7] = AFR_to_ADC_counts(o2_sensor[3].AFR) & 0xFF;
+  //  TxData[0] = AFR_to_ADC_counts(o2_sensor[0].AFR) >> 8;
+  //  TxData[1] = AFR_to_ADC_counts(o2_sensor[0].AFR) & 0xFF;
+  //  TxData[2] = AFR_to_ADC_counts(o2_sensor[1].AFR) >> 8;
+  //  TxData[3] = AFR_to_ADC_counts(o2_sensor[1].AFR) & 0xFF;
+  //  TxData[4] = AFR_to_ADC_counts(o2_sensor[2].AFR) >> 8;
+  //  TxData[5] = AFR_to_ADC_counts(o2_sensor[2].AFR) & 0xFF;
+  //  TxData[6] = AFR_to_ADC_counts(o2_sensor[3].AFR) >> 8;
+  //  TxData[7] = AFR_to_ADC_counts(o2_sensor[3].AFR) & 0xFF;
   // TxData[2] = o2_sensor.function_code >> 8;
   // TxData[3] = o2_sensor.function_code & 0xFF;
   // TxData[4] = o2_sensor.warmup >> 8;
   // TxData[5] = o2_sensor.warmup & 0xFF;
   // TxData[6] = o2_sensor.error_code >> 8;
   // TxData[7] = o2_sensor.error_code & 0xFF;
-//  TxHeader.DLC = length;
-//  TxMailbox = 0;
-//  TxHeader.ExtId = (offset << 18) | (mtype << 15) | (fromid << 11) | (toid << 7) | (table << 3);
-//  TxHeader.IDE = CAN_ID_EXT;
-//  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
+  //  TxHeader.DLC = length;
+  //  TxMailbox = 0;
+  //  TxHeader.ExtId = (offset << 18) | (mtype << 15) | (fromid << 11) | (toid << 7) | (table << 3);
+  //  TxHeader.IDE = CAN_ID_EXT;
+  //  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  //  {
+  //    Error_Handler();
+  //  }
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK)
-	{
-		Error_Handler();
-	}
-	else
-	{
-//		Parse_CAN_data();
-		//got valid can data
-	}
+  if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  else
+  {
+    //		Parse_CAN_data();
+    //got valid can data
+  }
+}
+
+void Initialize()
+{
+  time_100hz = HAL_GetTick();
+  time_10hz = HAL_GetTick();
+  time_5hz = HAL_GetTick();
+  time_2hz = HAL_GetTick();
+  time_1p5hz = HAL_GetTick();
+  abs_timer = HAL_GetTick();
+  counter_timer = HAL_GetTick();
+
+  turnsignal_left = false;
+  lights_on = false;
+  rpmcount = 500;
+  abs_counter = 0;
+  counter = 0;
+  mph_counter = 0;
+  mph_last = 0;
+  mph_timer = 0;
+
+  car.mph = 5;
+  car.rpm = 1500;
+
+  // Set_Time(&hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  // Delete_Error_MSG();
+}
+
+void Periodic_Maintenance()
+{
+  // Set_DSC(&car.mph, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+  // Set_Seatbelt_Light(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+  // Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  // if (HAL_GetTick() >= (abs_timer + 200))
+  // {
+  //   abs_counter++;
+  //   abs_timer = HAL_GetTick();
+  // }
+  // if (abs_counter > 15)
+  //   abs_counter = 0;
+  // Set_ABS_2(&abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+  // if (HAL_GetTick() >= (counter_timer + 200))
+  // {
+  //   counter++;
+  //   counter_timer = HAL_GetTick();
+  // }
+  // if (counter > 254)
+  //   counter = 0;
+  // Set_Counter(&counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+}
+
+void Delete_Error_MSG()
+{
+  Set_Error(207, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  // Set_Error(281, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+  // Set_Error(60, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  Set_Error(167, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  Set_Error(97, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  // Set_Error(300, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
 }
 
 void Turnsignal_Left()
 {
-		Set_Signals(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		{
-			Error_Handler();
-		}
-		Set_Signals(1, &hcan, &TxHeader, &TxData, &TxMailbox);
-		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		{
-			Error_Handler();
-		}
+  Set_Signals(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  Set_Signals(1, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 void Turnsignal_Right()
 {
-		Set_Signals(4, &hcan, &TxHeader, &TxData, &TxMailbox);
-		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		{
-			Error_Handler();
-		}
-		Set_Signals(3, &hcan, &TxHeader, &TxData, &TxMailbox);
-		if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-		{
-			Error_Handler();
-		}
+  Set_Signals(4, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  Set_Signals(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 void Send_Speed_Msg()
 {
-	uint16_t mph, mph_a, mph_2a;
-	mph = 20;
+  uint16_t mph_a, mph_2a;
 
-	mph_a = (((HAL_GetTick()-mph_timer)/50)*mph/2);
-	mph_2a = mph_a + mph_last;
-	mph_last = mph_2a;
-	mph_timer = HAL_GetTick();
+  mph_a = (((HAL_GetTick() - mph_timer) / 50) * car.mph / 2);
+  mph_2a = mph_a + mph_last;
+  mph_last = mph_2a;
+  mph_timer = HAL_GetTick();
 
-	Set_MPH(&mph_2a, &mph_counter,&hcan, &TxHeader, &TxData, &TxMailbox);
-	if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-	{
-		Error_Handler();
-	}
-
-	mph_counter += 200;
+  Set_MPH(&mph_2a, &mph_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  HAL_Delay(5);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  mph_counter += 200;
 }
 /* USER CODE END 4 */
 
@@ -562,12 +612,12 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-	printf("ERROR!");
+  printf("ERROR!");
 
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -576,7 +626,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
