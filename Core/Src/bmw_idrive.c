@@ -297,14 +297,13 @@ void Set_ABS(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader
 	TxData[2] = 0xB3;
 	TxData[3] = 0xFC;
 	TxData[4] = 0xF0;
-	TxData[5] = 0x00;
+	TxData[5] = 0x43;
 	TxData[6] = 0x00;
 	TxData[7] = 0x65;
 }
 
 void Set_ABS_2(uint8_t *abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
-
 	TxHeader->DLC = 2;
 	TxHeader->StdId = CAN_ID_ABS_2;
 	TxMailbox = 0;

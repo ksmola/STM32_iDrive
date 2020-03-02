@@ -337,6 +337,7 @@ int main(void)
         {
           Error_Handler();
         }
+        
         Periodic_Maintenance();
 
         time_5hz = HAL_GetTick();
@@ -734,11 +735,11 @@ void Periodic_Maintenance()
   // {
   //   Error_Handler();
   // }
-  // Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
-  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
+  Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   // if (HAL_GetTick() >= (abs_timer + 200))
   // {
