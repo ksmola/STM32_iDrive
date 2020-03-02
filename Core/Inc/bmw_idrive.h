@@ -10,6 +10,11 @@
 #define UPDATE_5HZ			HAL_GetTick() >= (time_5hz + 200)
 #define UPDATE_2HZ			HAL_GetTick() >= (time_2hz + 500)
 #define UPDATE_1P5HZ		HAL_GetTick() >= (time_1p5hz + 750)
+#define UPDATE_TURNSIGNAL   HAL_GetTick() >= (time_turnsignal + 580) //~1.72Hz
+
+#define UPDATE_1SEC         HAL_GetTick() >= (time_init + 1000)
+#define UPDATE_2SEC         HAL_GetTick() >= (time_init + 2000)
+#define UPDATE_LIGHTS       HAL_GetTick() >= (time_lights + 5000)
 
 #define CAN_ID_RPM      		0x0AA
 #define CAN_ID_MPH      		0x1A6
@@ -29,6 +34,7 @@
 #define CAN_ID_DSC  			0x0CE
 #define CAN_ID_STEERINGPOS      0x0C8
 #define CAN_ID_SET_TIME         0x39E
+#define CAN_ID_EBRAKE           0x34F
 
 void Send_IGN_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Send_IGN_Key_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
@@ -37,7 +43,7 @@ void Set_MPH(uint16_t *mph, uint16_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHe
 void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Error(uint16_t signal, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Fuel(uint8_t percent, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
-void Set_Temp (uint16_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
+void Set_Temp(uint16_t temp, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Light_Switch(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Seatbelt_Light(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
@@ -47,3 +53,5 @@ void Set_Counter(uint8_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef 
 void Set_DSC(uint8_t *speed, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Steeringwheel_pos(uint16_t *pos, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
 void Set_Time(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
+void Set_Ebrake(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);
+void Set_Dimmer(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox);

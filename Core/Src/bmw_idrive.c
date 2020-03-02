@@ -80,7 +80,7 @@ void Send_IGN_KEY_Status(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTy
 	//    TxData[2] = 0x21;
 	TxData[3] = 0x8F;
 	TxData[4] = 0xE2; //counter
-	//    TxData[4] = 0x50; //counter
+					  //    TxData[4] = 0x50; //counter
 }
 
 void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -232,8 +232,17 @@ void Set_Lights(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHea
 	TxHeader->StdId = CAN_ID_LIGHTS;
 	TxMailbox = 0;
 
-	TxData[0] = 0x85;
-	TxData[1] = 0x12;
+	if (val)
+	{
+
+		TxData[0] = 0x85;
+		TxData[1] = 0x12;
+	}
+	else
+	{
+		TxData[0] = 0x00;
+		TxData[1] = 0x00;
+	}
 	TxData[2] = 0xF7;
 }
 
@@ -360,4 +369,26 @@ void Set_Time(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t Tx
 	TxData[5] = 0xDF;
 	TxData[6] = 0x07;
 	TxData[6] = 0xF2;
+}
+
+void Set_Ebrake(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 2;
+	TxHeader->StdId = CAN_ID_EBRAKE;
+	TxMailbox = 0;
+
+	if (status)
+		TxData[0] = 0xFE;
+	else
+		TxData[0] = 0xFD;
+	TxData[1] = 0xFF;
+}
+
+void Set_Dimmer(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+{
+	TxHeader->DLC = 2;
+	TxHeader->StdId = CAN_ID_DIMMER;
+	TxMailbox = 0;
+	TxData[0] = 0xA9;
+	TxData[1] = 0xFF;
 }
