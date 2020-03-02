@@ -741,18 +741,18 @@ void Periodic_Maintenance()
     Error_Handler();
   }
 
-  // if (HAL_GetTick() >= (abs_timer + 200))
-  // {
-  //   abs_counter++;
-  //   abs_timer = HAL_GetTick();
-  // }
-  // if (abs_counter > 15)
-  //   abs_counter = 0;
-  // Set_ABS_2(&abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
-  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
+  if (HAL_GetTick() >= (abs_timer + 200))
+  {
+    abs_counter++;
+    abs_timer = HAL_GetTick();
+  }
+  if (abs_counter > 14)
+    abs_counter = 0;
+  Set_ABS_2(&abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_GetTick() >= (counter_timer + 200))
   {
     counter++;

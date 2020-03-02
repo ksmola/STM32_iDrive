@@ -308,7 +308,7 @@ void Set_ABS_2(uint8_t *abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDe
 	TxHeader->StdId = CAN_ID_ABS_2;
 	TxMailbox = 0;
 
-	TxData[0] = 0xF0 + *abs_counter;
+	TxData[0] = 0xF0 + *abs_counter; //counts from F0 to FE in 200ms increments
 	TxData[1] = 0xFF;
 }
 
