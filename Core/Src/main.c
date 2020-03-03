@@ -368,6 +368,7 @@ int main(void)
         {
           Error_Handler();
         }
+        Send_Speed_Msg();
 
         time_10hz = HAL_GetTick();
       }
@@ -391,6 +392,18 @@ int main(void)
         Periodic_Maintenance();
 
         time_5hz = HAL_GetTick();
+      }
+      if (UPDATE_100HZ) //updates every 10ms
+      {
+        Set_RPM(rpmcount, &hcan, &TxHeader, &TxData, &TxMailbox);
+        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+        {
+          Error_Handler();
+        }
+        rpmcount++;
+        if (rpmcount > 7000)
+          rpmcount = 0;
+        time_100hz = HAL_GetTick();
       }
       if (UPDATE_LIGHTS)
       {
@@ -861,7 +874,7 @@ void Send_Speed_Msg()
   mph_last = mph_2a;
   mph_timer = HAL_GetTick();
 
-  Set_MPH(&mph_2a, &mph_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  Set_MPH(mph_2a, mph_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
   HAL_Delay(5);
   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   {

@@ -102,23 +102,23 @@ void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
 	TxData[7] = 0x99; //not needed?
 }
 
-void Set_MPH(uint16_t *mph, uint16_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_MPH(uint16_t mph, uint16_t counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 8;
 	TxHeader->StdId = CAN_ID_MPH;
 	TxMailbox = 0;
 
-	TxData[0] = *mph & 0xFF;
-	TxData[1] = *mph >> 8;
+	TxData[0] = mph & 0xFF;
+	TxData[1] = mph >> 8;
 
-	TxData[2] = *mph & 0xFF;
-	TxData[3] = *mph >> 8;
+	TxData[2] = mph & 0xFF;
+	TxData[3] = mph >> 8;
 
-	TxData[4] = *mph & 0xFF;
-	TxData[5] = *mph >> 8;
+	TxData[4] = mph & 0xFF;
+	TxData[5] = mph >> 8;
 
-	TxData[6] = *counter & 0xFF;
-	TxData[7] = (*counter >> 8) | 0xF0;
+	TxData[6] = counter & 0xFF;
+	TxData[7] = (counter >> 8) | 0xF0;
 }
 
 void Set_Signals(uint8_t status, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
@@ -322,10 +322,10 @@ void Set_Counter(uint8_t counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *
 	TxData[1] = 0xFF;
 }
 
-void Set_DSC(uint8_t *speed, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_DSC(uint8_t speed, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	uint8_t c_speed;
-	c_speed = *speed * 730;
+	c_speed = speed * 730;
 
 	TxHeader->DLC = 8;
 	TxHeader->StdId = CAN_ID_DSC;
@@ -340,14 +340,14 @@ void Set_DSC(uint8_t *speed, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHea
 	TxData[6] = c_speed & 0xFF;
 	TxData[7] = c_speed >> 8;
 }
-void Set_Steeringwheel_pos(uint16_t *pos, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_Steeringwheel_pos(uint16_t pos, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 6;
 	TxHeader->StdId = CAN_ID_STEERINGPOS;
 	TxMailbox = 0;
 
-	TxData[0] = *pos & 0xFF;
-	TxData[1] = *pos >> 8;
+	TxData[0] = pos & 0xFF;
+	TxData[1] = pos >> 8;
 	TxData[2] = 0xFC;
 	TxData[3] = 0x00;
 	TxData[4] = 0x00;
