@@ -302,23 +302,23 @@ void Set_ABS(uint8_t val, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader
 	TxData[7] = 0x65;
 }
 
-void Set_ABS_2(uint8_t *abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_ABS_2(uint8_t abs_counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 2;
 	TxHeader->StdId = CAN_ID_ABS_2;
 	TxMailbox = 0;
 
-	TxData[0] = 0xF0 + *abs_counter; //counts from F0 to FE in 200ms increments
+	TxData[0] = 0xF0 + abs_counter; //counts from F0 to FE in 200ms increments
 	TxData[1] = 0xFF;
 }
 
-void Set_Counter(uint8_t *counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
+void Set_Counter(uint8_t counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
 {
 	TxHeader->DLC = 2;
 	TxHeader->StdId = CAN_ID_COUNTER;
 	TxMailbox = 0;
 
-	TxData[0] = *counter;
+	TxData[0] = counter;
 	TxData[1] = 0xFF;
 }
 

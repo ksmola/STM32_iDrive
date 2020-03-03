@@ -185,8 +185,6 @@ int main(void)
           Error_Handler();
         }
 
-        Periodic_Maintenance();
-
         time_10hz = HAL_GetTick();
       }
       if (UPDATE_5HZ) //updates every 200ms
@@ -196,6 +194,8 @@ int main(void)
         {
           Error_Handler();
         }
+
+        Periodic_Maintenance();
 
         time_5hz = HAL_GetTick();
       }
@@ -297,7 +297,7 @@ int main(void)
 
       if (UPDATE_2SEC)
       {
-        cluster_state = IGNITION_ON; // only if key to cranking
+        cluster_state = CRANKING; // only if key to cranking
         time_init = HAL_GetTick();
       }
       if (UPDATE_LIGHTS)
@@ -460,14 +460,12 @@ int main(void)
     //   time_2hz = HAL_GetTick();
     // }
 
-    if (HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin) == 1)
-    {
-      if (!lights_on)
-        lights_on = true;
-      else if (lights_on)
-        lights_on = false;
-    }
-    if (HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin) == 1)
+    if (HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin))
+      lights_on = true;
+    else if (!HAL_GPIO_ReadPin(GPIOA, LIGHT_Pin))
+      lights_on = false;
+
+    if (HAL_GPIO_ReadPin(GPIOA, TURN_LEFT_Pin))
     {
       if (UPDATE_TURNSIGNAL)
       {
@@ -476,7 +474,7 @@ int main(void)
       }
     }
 
-    if (HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin) == 1)
+    if (HAL_GPIO_ReadPin(GPIOA, TURN_RIGHT_Pin))
     {
       if (UPDATE_TURNSIGNAL)
       {
@@ -484,11 +482,15 @@ int main(void)
         time_turnsignal = HAL_GetTick();
       }
     }
+    if (HAL_GPIO_ReadPin(GPIOA, E_BRAKE_Pin))
+      car.ebrake = true;
+    else if (!HAL_GPIO_ReadPin(GPIOA, E_BRAKE_Pin))
+      car.ebrake = false;
   }
 
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 
   /* USER CODE END 3 */
 }
@@ -517,7 +519,8 @@ void SystemClock_Config(void)
   }
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -613,6 +616,7 @@ static void MX_CAN_Init(void)
   //   }
 
   /* USER CODE END CAN_Init 2 */
+
 }
 
 /**
@@ -639,11 +643,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LIGHT_Pin TURN_LEFT_Pin TURN_RIGHT_Pin */
-  GPIO_InitStruct.Pin = LIGHT_Pin | TURN_LEFT_Pin | TURN_RIGHT_Pin;
+  /*Configure GPIO pins : LIGHT_Pin TURN_LEFT_Pin TURN_RIGHT_Pin E_BRAKE_Pin 
+                           HAZARDS_Pin HIGH_BEAMS_Pin */
+  GPIO_InitStruct.Pin = LIGHT_Pin|TURN_LEFT_Pin|TURN_RIGHT_Pin|E_BRAKE_Pin 
+                          |HAZARDS_Pin|HIGH_BEAMS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -735,24 +742,28 @@ void Periodic_Maintenance()
   // {
   //   Error_Handler();
   // }
+
   Set_ABS(0, &hcan, &TxHeader, &TxData, &TxMailbox);
   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   {
     Error_Handler();
   }
 
-  if (HAL_GetTick() >= (abs_timer + 200))
-  {
-    abs_counter++;
-    abs_timer = HAL_GetTick();
-  }
-  if (abs_counter > 14)
-    abs_counter = 0;
-  Set_ABS_2(&abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
-  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  // if (HAL_GetTick() >= (abs_timer + 200))
+  // {
+  //   abs_counter++;
+  //   abs_timer = HAL_GetTick();
+  // }
+  // if (abs_counter > 14)
+  //   abs_counter = 0;
+  // Set_ABS_2(abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  // {
+  //   Error_Handler();
+  // }
+
+  HAL_Delay(1);
+
   if (HAL_GetTick() >= (counter_timer + 200))
   {
     counter++;
@@ -760,16 +771,17 @@ void Periodic_Maintenance()
   }
   if (counter > 254)
     counter = 0;
-  Set_Counter(&counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+  Set_Counter(counter, &hcan, &TxHeader, &TxData, &TxMailbox);
   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   {
     Error_Handler();
   }
-  // Set_Ebrake(&car.ebrake, &hcan, &TxHeader, &TxData, &TxMailbox);
-  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
+
+  Set_Ebrake(car.ebrake, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
   // Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
   // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   // {
@@ -874,7 +886,7 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
+#ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -883,7 +895,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

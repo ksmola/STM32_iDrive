@@ -66,6 +66,12 @@ void Error_Handler(void);
 #define TURN_LEFT_GPIO_Port GPIOA
 #define TURN_RIGHT_Pin GPIO_PIN_4
 #define TURN_RIGHT_GPIO_Port GPIOA
+#define E_BRAKE_Pin GPIO_PIN_5
+#define E_BRAKE_GPIO_Port GPIOA
+#define HAZARDS_Pin GPIO_PIN_6
+#define HAZARDS_GPIO_Port GPIOA
+#define HIGH_BEAMS_Pin GPIO_PIN_7
+#define HIGH_BEAMS_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
