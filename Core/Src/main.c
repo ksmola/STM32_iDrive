@@ -60,6 +60,8 @@ typedef struct
   uint16_t watertemp;
   uint8_t ebrake;
   uint8_t fuel;
+  uint8_t highbeams;
+  uint8_t hazards;
 } car_data_t;
 
 typedef enum
@@ -403,42 +405,7 @@ int main(void)
     default:
       break;
     }
-    // if (UPDATE_5HZ) //updates every 200ms
-    // {
-    //   Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-    //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-    //   {
-    //     Error_Handler();
-    //   }
-
-    //   time_5hz = HAL_GetTick();
-    // }
-
-    // if (UPDATE_10HZ) //updates every 100ms
-    // {
-    //   Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
-    //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-    //   {
-    //     Error_Handler();
-    //   }
-
-    //   Set_Fuel(40, &hcan, &TxHeader, &TxData, &TxMailbox);
-    //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-    //   {
-    //     Error_Handler();
-    //   }
-    //   Set_Temp(250, &hcan, &TxHeader, &TxData, &TxMailbox);
-    //   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-    //   {
-    //     Error_Handler();
-    //   }
-
-    //   Send_Speed_Msg();
-
-    //   Periodic_Maintenance();
-
-    //   time_10hz = HAL_GetTick();
-    // }
+   
 
     if (UPDATE_100HZ) //updates every 10ms
     {
@@ -486,6 +453,23 @@ int main(void)
       car.ebrake = true;
     else if (!HAL_GPIO_ReadPin(GPIOA, E_BRAKE_Pin))
       car.ebrake = false;
+
+    if (HAL_GPIO_ReadPin(GPIOA, HAZARDS_Pin))
+    {
+      if (UPDATE_TURNSIGNAL)
+      {
+        Hazards();
+        time_turnsignal = HAL_GetTick();
+      }
+    }
+      // car.hazards = true;
+    else if (!HAL_GPIO_ReadPin(GPIOA, HAZARDS_Pin))
+      car.hazards = false;
+
+    if (HAL_GPIO_ReadPin(GPIOA, HIGH_BEAMS_Pin))
+      car.highbeams = true;
+    else if (!HAL_GPIO_ReadPin(GPIOA, HIGH_BEAMS_Pin))
+      car.highbeams = false;
   }
 
     /* USER CODE END WHILE */
@@ -533,7 +517,8 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief CAN Initialization Function
+  * @brief CAN Initialization F
+  * unction
   * @param None
   * @retval None
   */
@@ -719,8 +704,10 @@ void Initialize()
   car.mph = 5;
   car.rpm = 1500;
   car.oiltemp = 250;
-  car.ebrake = 0; //ebrake off
+  car.ebrake = false; //ebrake off
   car.fuel = 100; // 100%
+  car.highbeams = false;
+  car.hazards = false;
   // Set_Time(&hcan, &TxHeader, &TxData, &TxMailbox);
   // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   // {
@@ -782,11 +769,7 @@ void Periodic_Maintenance()
   {
     Error_Handler();
   }
-  // Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
-  // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-  // {
-  //   Error_Handler();
-  // }
+
 }
 
 void Delete_Error_MSG()
@@ -848,6 +831,21 @@ void Turnsignal_Right()
   }
   // HAL_Delay(5);
   Set_Signals(3, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+void Hazards()
+{
+  Set_Signals(6, &hcan, &TxHeader, &TxData, &TxMailbox);
+  if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  
+  Set_Signals(5, &hcan, &TxHeader, &TxData, &TxMailbox);
   if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
   {
     Error_Handler();
