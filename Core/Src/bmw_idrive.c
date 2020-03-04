@@ -100,6 +100,18 @@ void Set_RPM(uint16_t rpm, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeade
 
 	TxData[6] = 0x80; //not needed?
 	TxData[7] = 0x99; //not needed?
+
+	// TxData[0] = 0x6C;
+	// TxData[1] = 0x06;
+
+	// TxData[2] = 0x28; //TPS
+	// TxData[3] = 0xFE; //TPS
+
+	// TxData[4] = 0xD0;
+	// TxData[5] = 0x6B;
+
+	// TxData[6] = 0x94; //not needed?
+	// TxData[7] = 0x00; //not needed?
 }
 
 void Set_MPH(uint16_t mph, uint16_t counter, CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *TxHeader, uint8_t TxData[], uint32_t *TxMailbox)
