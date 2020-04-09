@@ -176,273 +176,275 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+	  HAL_Delay(500);
     //statemachine, that simulates turn on in car, we probably need to cycle trough ignition states?
-    switch (cluster_state)
-    {
-    case UNKNOWN:
-      if (UPDATE_10HZ) //updates every 100ms
-      {
-        Send_IGN_KEY_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        time_10hz = HAL_GetTick();
-      }
-      if (UPDATE_5HZ) //updates every 200ms
-      {
-        Send_IGN_Status(0, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Periodic_Maintenance();
-
-        time_5hz = HAL_GetTick();
-      }
-
-      if (UPDATE_2SEC)
-      {
-        cluster_state = INITIALIZED;
-        time_init = HAL_GetTick();
-      }
-
-      if (UPDATE_LIGHTS)
-      {
-        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-      }
-
-      break;
-    case INITIALIZED:
-      if (UPDATE_10HZ) //updates every 100ms
-      {
-        Send_IGN_KEY_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key is being inserted)
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        time_10hz = HAL_GetTick();
-      }
-      if (UPDATE_5HZ) //updates every 200ms
-      {
-        Send_IGN_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Periodic_Maintenance();
-
-        time_5hz = HAL_GetTick();
-      }
-
-      if (UPDATE_1SEC)
-      {
-        cluster_state = IGNITION_ON;
-        time_init = HAL_GetTick();
-      }
-      if (UPDATE_LIGHTS)
-      {
-        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        time_lights = HAL_GetTick();
-      }
-      break;
-    case IGNITION_ON:
-      if (UPDATE_10HZ) //updates every 100ms
-      {
-        Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //engine running / key to position 2
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        time_10hz = HAL_GetTick();
-      }
-      if (UPDATE_5HZ) //updates every 200ms
-      {
-        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Periodic_Maintenance();
-        Delete_Error_MSG();
-
-        time_5hz = HAL_GetTick();
-      }
-
-      if (UPDATE_2SEC)
-      {
-        cluster_state = CRANKING; // only if key to cranking
-        time_init = HAL_GetTick();
-      }
-      if (UPDATE_LIGHTS)
-      {
-        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        time_lights = HAL_GetTick();
-      }
-      break;
-    case CRANKING:
-      if (UPDATE_10HZ) //updates every 100ms
-      {
-        Send_IGN_KEY_Status(4, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key in position 1 also this value when engine is stopped)
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        time_10hz = HAL_GetTick();
-      }
-      if (UPDATE_5HZ) //updates every 200ms
-      {
-        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Periodic_Maintenance();
-
-        time_5hz = HAL_GetTick();
-      }
-
-      if (UPDATE_1SEC) // 1sec for simulation only, otherwise use engine status from ECU
-      {
-        cluster_state = RUNNING;
-        time_init = HAL_GetTick();
-      }
-      if (UPDATE_LIGHTS)
-      {
-        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        time_lights = HAL_GetTick();
-      }
-      break;
-    case RUNNING:
-      if (UPDATE_10HZ) //updates every 100ms
-      {
-        Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key in position 1 also this value when engine is stopped)
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        Send_Speed_Msg();
-
-        time_10hz = HAL_GetTick();
-      }
-      if (UPDATE_5HZ) //updates every 200ms
-      {
-        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        Periodic_Maintenance();
-
-        time_5hz = HAL_GetTick();
-      }
-      if (UPDATE_100HZ) //updates every 10ms
-      {
-        Set_RPM(car.rpm, &hcan, &TxHeader, &TxData, &TxMailbox);
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-        // rpmcount++;
-        // if (rpmcount > 7000)
-        //   rpmcount = 0;
-        time_100hz = HAL_GetTick();
-      }
-      if (UPDATE_LIGHTS)
-      {
-        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
-        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-        {
-          Error_Handler();
-        }
-
-        time_lights = HAL_GetTick();
-      }
-      break;
-    default:
-      break;
-    }
+//    switch (cluster_state)
+//    {
+//    case UNKNOWN:
+//      if (UPDATE_10HZ) //updates every 100ms
+//      {
+//        Send_IGN_KEY_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox); //T15
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        time_10hz = HAL_GetTick();
+//      }
+//      if (UPDATE_5HZ) //updates every 200ms
+//      {
+//        Send_IGN_Status(0, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Periodic_Maintenance();
+//
+//        time_5hz = HAL_GetTick();
+//      }
+//
+//      if (UPDATE_2SEC)
+//      {
+//        cluster_state = INITIALIZED;
+//        time_init = HAL_GetTick();
+//      }
+//
+//      if (UPDATE_LIGHTS)
+//      {
+//        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//      }
+//
+//      break;
+//    case INITIALIZED:
+//      if (UPDATE_10HZ) //updates every 100ms
+//      {
+//        Send_IGN_KEY_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key is being inserted)
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        time_10hz = HAL_GetTick();
+//      }
+//      if (UPDATE_5HZ) //updates every 200ms
+//      {
+//        Send_IGN_Status(1, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Periodic_Maintenance();
+//
+//        time_5hz = HAL_GetTick();
+//      }
+//
+//      if (UPDATE_1SEC)
+//      {
+//        cluster_state = IGNITION_ON;
+//        time_init = HAL_GetTick();
+//      }
+//      if (UPDATE_LIGHTS)
+//      {
+//        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        time_lights = HAL_GetTick();
+//      }
+//      break;
+//    case IGNITION_ON:
+//      if (UPDATE_10HZ) //updates every 100ms
+//      {
+//        Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //engine running / key to position 2
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        time_10hz = HAL_GetTick();
+//      }
+//      if (UPDATE_5HZ) //updates every 200ms
+//      {
+//        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Periodic_Maintenance();
+//        Delete_Error_MSG();
+//
+//        time_5hz = HAL_GetTick();
+//      }
+//
+//      if (UPDATE_2SEC)
+//      {
+//        cluster_state = CRANKING; // only if key to cranking
+//        time_init = HAL_GetTick();
+//      }
+//      if (UPDATE_LIGHTS)
+//      {
+//        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        time_lights = HAL_GetTick();
+//      }
+//      break;
+//    case CRANKING:
+//      if (UPDATE_10HZ) //updates every 100ms
+//      {
+//        Send_IGN_KEY_Status(4, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key in position 1 also this value when engine is stopped)
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        time_10hz = HAL_GetTick();
+//      }
+//      if (UPDATE_5HZ) //updates every 200ms
+//      {
+//        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Periodic_Maintenance();
+//
+//        time_5hz = HAL_GetTick();
+//      }
+//
+//      if (UPDATE_1SEC) // 1sec for simulation only, otherwise use engine status from ECU
+//      {
+//        cluster_state = RUNNING;
+//        time_init = HAL_GetTick();
+//      }
+//      if (UPDATE_LIGHTS)
+//      {
+//        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        time_lights = HAL_GetTick();
+//      }
+//      break;
+//    case RUNNING:
+//      if (UPDATE_10HZ) //updates every 100ms
+//      {
+//        Send_IGN_KEY_Status(3, &hcan, &TxHeader, &TxData, &TxMailbox); //engine off (key in position 1 also this value when engine is stopped)
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        Send_Speed_Msg();
+//
+//        time_10hz = HAL_GetTick();
+//      }
+//      if (UPDATE_5HZ) //updates every 200ms
+//      {
+//        Send_IGN_Status(2, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Set_Temp(car.oiltemp, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        Set_Fuel(car.fuel, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        Periodic_Maintenance();
+//
+//        time_5hz = HAL_GetTick();
+//      }
+//      if (UPDATE_100HZ) //updates every 10ms
+//      {
+//        Set_RPM(car.rpm, &hcan, &TxHeader, &TxData, &TxMailbox);
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//        // rpmcount++;
+//        // if (rpmcount > 7000)
+//        //   rpmcount = 0;
+//        time_100hz = HAL_GetTick();
+//      }
+//      if (UPDATE_LIGHTS)
+//      {
+//        Set_Lights(lights_on, &hcan, &TxHeader, &TxData, &TxMailbox); //this might need to be repeated as lights otherwise turn off after a few seconds
+//        while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+//        if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+//        {
+//          Error_Handler();
+//        }
+//
+//        time_lights = HAL_GetTick();
+//      }
+//      break;
+//    default:
+//      break;
+//    }
 
     if (UPDATE_100HZ) //updates every 10ms
     {
@@ -773,19 +775,19 @@ int main(void)
     //   Error_Handler();
     // }
     
-    // if (HAL_GetTick() >= (abs_timer + 200))
-    // {
-    //   abs_counter++;
-    //   abs_timer = HAL_GetTick();
-    // }
-    // if (abs_counter > 14)
-    //   abs_counter = 0;
-    // Set_ABS_2(abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
-    // while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
-    // if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
-    // {
-    //   Error_Handler();
-    // }
+    if (HAL_GetTick() >= (abs_timer + 200))
+    {
+      abs_counter++;
+      abs_timer = HAL_GetTick();
+    }
+    if (abs_counter > 14)
+      abs_counter = 0;
+    Set_ABS_2(abs_counter, &hcan, &TxHeader, &TxData, &TxMailbox);
+    while (!HAL_CAN_GetTxMailboxesFreeLevel(&hcan));
+    if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, &TxData, &TxMailbox) != HAL_OK)
+    {
+      Error_Handler();
+    }
 
     if (HAL_GetTick() >= (counter_timer + 200))
     {

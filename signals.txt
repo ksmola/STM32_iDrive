@@ -46,6 +46,39 @@ eg.: D9 FF
 B0: counter, from 00 to FE (increments every msg / 200ms)
 B1: FF
 
+---------
+| 0x4C0 |
+---------
+
+---------
+| 0x4F2 |
+---------
+
+---------
+| 0x4D6 |
+---------
+
+---------
+| 0x1A0 |
+---------
+
+---------
+| 0x1D2 |
+---------
+(5Hz, 6 bytes, transmission data)
+
+eg.: F0 0F FF 1C F0 FF
+
+B0: gear, P = E1, D/DS/M1-6 = 78, R = D2, N = B4
+B1: first nibble: always 0 except when B0 = 78: 0 = D/DS, 5 = M1, 6 = M2, 7 = M3, 8 = M4, 9 = M5, A = M6
+    second nibble: always F
+B2: always FF
+B3: first nibble: counter, 0 - E (increments once per frame, 200ms)
+    second nibble: always C
+B4: first nibble: always F  
+    second nibble: usually 0; 2 when M1-M6, 1 when D/S
+B5: always FF
+
 
 --------------------------------
 --------------------------------
